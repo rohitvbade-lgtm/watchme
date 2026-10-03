@@ -17,7 +17,10 @@ export function initializeApp(localDbService: LocalDbService) {
   declarations: [AppComponent],
   imports: [
     BrowserModule,
-    IonicModule.forRoot(),
+    IonicModule.forRoot({
+      innerHTMLTemplatesEnabled: true,
+      sanitizerEnabled: false
+    }),
     AppRoutingModule,
     HttpClientModule
   ],

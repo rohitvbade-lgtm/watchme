@@ -5,6 +5,7 @@ import { WatchlistService } from '../../core/services/watchlist.service';
 import { LocalDbService } from '../../core/services/local-db.service';
 import { ApiService } from '../../core/services/api.service';
 import { DeviceService } from '../../core/services/device.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { LocalWatchlistItem } from '../../core/models/watchlist-item.model';
 
 @Component({
@@ -25,6 +26,7 @@ export class ItemPage implements OnInit {
     private localDb: LocalDbService,
     private apiService: ApiService,
     private deviceService: DeviceService,
+    private notificationService: NotificationService,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
     private cdr: ChangeDetectorRef
@@ -109,6 +111,11 @@ export class ItemPage implements OnInit {
       next: async (res) => {
         this.sendingNotification = false;
         this.cdr.markForCheck();
+        if (res && res.text) {
+          const title = res.itemTitle || this.item?.title || 'WatchMe';
+          const imageUrl = res.itemImageUrl || this.getPosterUrl(this.item?.posterPath);
+          await this.notificationService.showNotification(title, res.text, imageUrl, this.backendId);
+        }
       },
       error: async (err) => {
         this.sendingNotification = false;

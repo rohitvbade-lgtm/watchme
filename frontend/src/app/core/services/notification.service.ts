@@ -4,7 +4,7 @@ import { PushNotifications } from '@capacitor/push-notifications';
 import { Capacitor } from '@capacitor/core';
 import { ApiService } from './api.service';
 import { DeviceService } from './device.service';
-import { ToastController, IonicSafeString } from '@ionic/angular';
+import { ToastController } from '@ionic/angular';
 
 @Injectable({
   providedIn: 'root'
@@ -70,7 +70,7 @@ export class NotificationService {
         watchlistItemId = url.replace('/item/', '');
       }
 
-      await this.showNotificationToast(itemTitle, text, imageUrl, watchlistItemId);
+      await this.showNotification(itemTitle, text, imageUrl, watchlistItemId);
     });
 
     PushNotifications.addListener('pushNotificationActionPerformed', (notification) => {
@@ -86,58 +86,65 @@ export class NotificationService {
     if (this.pollingInterval) return;
 
     const deviceId = this.deviceService.getDeviceId();
+    let initialSyncDone = false;
 
-    // Fetch initial list so we record what's already in the DB
-    this.apiService.getNotifications(deviceId).subscribe((notifs) => {
-      if (notifs && notifs.length > 0) {
-        this.lastSeenNotificationId = notifs[0].id;
+    // Fetch initial list so we record what's already in the DB and don't replay old items
+    this.apiService.getNotifications(deviceId).subscribe({
+      next: (notifs) => {
+        if (notifs && notifs.length > 0) {
+          this.lastSeenNotificationId = notifs[0].id;
+        }
+        initialSyncDone = true;
+      },
+      error: () => {
+        initialSyncDone = true;
       }
     });
 
-    // Poll every 5 seconds for new notifications created by backend scheduler or test endpoint
+    // Poll every 4 seconds for new notifications created by backend scheduler or test endpoint
     this.pollingInterval = setInterval(() => {
-      this.apiService.getNotifications(deviceId).subscribe(async (notifs) => {
-        if (!notifs || notifs.length === 0) return;
-        const latest = notifs[0];
-        if (this.lastSeenNotificationId === null) {
-          this.lastSeenNotificationId = latest.id;
-          return;
-        }
-        if (latest.id !== this.lastSeenNotificationId) {
-          this.lastSeenNotificationId = latest.id;
-          const itemTitle = latest.itemTitle || 'WatchMe';
-          const text = latest.text;
-          const imageUrl = latest.itemImageUrl;
-          const watchlistItemId = latest.watchlistItemId;
+      this.apiService.getNotifications(deviceId).subscribe({
+        next: async (notifs) => {
+          if (!notifs || notifs.length === 0) return;
+          const latest = notifs[0];
 
-          await this.showNotificationToast(itemTitle, text, imageUrl, watchlistItemId);
-        }
+          if (!initialSyncDone) {
+            this.lastSeenNotificationId = latest.id;
+            initialSyncDone = true;
+            return;
+          }
+
+          if (this.lastSeenNotificationId === null || latest.id !== this.lastSeenNotificationId) {
+            this.lastSeenNotificationId = latest.id;
+            const itemTitle = latest.itemTitle || 'WatchMe';
+            const text = latest.text;
+            const imageUrl = latest.itemImageUrl;
+            const watchlistItemId = latest.watchlistItemId;
+
+            await this.showNotification(itemTitle, text, imageUrl, watchlistItemId);
+          }
+        },
+        error: (err) => console.error('[NotificationService] Polling error:', err)
       });
-    }, 5000);
+    }, 4000);
   }
 
-  private async showNotificationToast(title: string, text: string, imageUrl?: string, watchlistItemId?: string): Promise<void> {
-    const escapedTitle = this.escapeHtml(title);
-    const escapedText = this.escapeHtml(text);
+  async showNotification(title: string, text: string, imageUrl?: string, watchlistItemId?: string): Promise<void> {
+    const escapedTitle = this.escapeHtml(title || 'WatchMe');
+    const escapedText = this.escapeHtml(text || '');
 
-    let messageContent: string | IonicSafeString;
+    let messageHtml: string;
     if (imageUrl) {
-      messageContent = new IonicSafeString(`
-        <div style="display: flex; align-items: center; gap: 12px; padding: 2px 0;">
-          <img src="${imageUrl}" alt="${escapedTitle}" style="width: 44px; height: 66px; object-fit: cover; border-radius: 6px; flex-shrink: 0; box-shadow: 0 3px 6px rgba(0,0,0,0.4);" onerror="this.style.display='none'"/>
-          <div style="flex: 1; min-width: 0;">
-            <div style="font-weight: 700; font-size: 0.95rem; line-height: 1.25; margin-bottom: 4px; color: #ffffff;">${escapedTitle}</div>
-            <div style="font-size: 0.85rem; line-height: 1.3; color: #e2e8f0;">${escapedText}</div>
+      messageHtml = `
+        <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
+          <img src="${imageUrl}" alt="${escapedTitle}" style="width: 44px; height: 66px; object-fit: cover; border-radius: 6px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.5);" onerror="this.style.display='none'"/>
+          <div style="flex: 1; min-width: 0; font-size: 0.9rem; line-height: 1.35; color: #ffffff;">
+            ${escapedText}
           </div>
         </div>
-      `);
+      `;
     } else {
-      messageContent = new IonicSafeString(`
-        <div style="padding: 2px 0;">
-          <div style="font-weight: 700; font-size: 0.95rem; line-height: 1.25; margin-bottom: 4px; color: #ffffff;">${escapedTitle}</div>
-          <div style="font-size: 0.85rem; line-height: 1.3; color: #e2e8f0;">${escapedText}</div>
-        </div>
-      `);
+      messageHtml = escapedText;
     }
 
     const buttons: any[] = [];
@@ -149,16 +156,30 @@ export class NotificationService {
         }
       });
     }
-    buttons.push({ text: 'Dismiss', role: 'cancel' });
+    buttons.push({ text: 'Close', role: 'cancel' });
 
-    const toast = await this.toastCtrl.create({
-      message: messageContent,
-      duration: 7000,
-      position: 'top',
-      color: 'dark',
-      buttons
-    });
-    await toast.present();
+    try {
+      const toast = await this.toastCtrl.create({
+        header: `🎬 ${title || 'WatchMe'}`,
+        message: messageHtml,
+        duration: 8000,
+        position: 'top',
+        color: 'primary',
+        buttons
+      });
+      await toast.present();
+    } catch (e) {
+      console.warn('[NotificationService] Rich toast failed, displaying standard fallback toast:', e);
+      const fallback = await this.toastCtrl.create({
+        header: `🎬 ${title || 'WatchMe'}`,
+        message: text,
+        duration: 6000,
+        position: 'top',
+        color: 'primary',
+        buttons
+      });
+      await fallback.present();
+    }
   }
 
   private escapeHtml(str: string): string {
