@@ -1,0 +1,7 @@
+{
+  "name": "WatchMe",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular"
+}

@@ -1,0 +1,107 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-title>
+      <div class="d-flex align-items-center">
+        <i class="bi bi-play-circle-fill text-danger me-2 fs-4"></i>
+        <span>Watch<span class="text-primary fw-bold">Me</span></span>
+      </div>
+    </ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <ion-refresher slot="fixed" (ionRefresh)="handleRefresh($event)">
+    <ion-refresher-content></ion-refresher-content>
+  </ion-refresher>
+
+  <!-- Loading Skeletons -->
+  <div *ngIf="loading && items.length === 0" class="ion-padding">
+    <ion-list>
+      <ion-item *ngFor="let i of [1,2,3,4,5]">
+        <ion-thumbnail slot="start">
+          <ion-skeleton-text animated></ion-skeleton-text>
+        </ion-thumbnail>
+        <ion-label>
+          <h3><ion-skeleton-text animated style="width: 80%"></ion-skeleton-text></h3>
+          <p><ion-skeleton-text animated style="width: 50%"></ion-skeleton-text></p>
+        </ion-label>
+      </ion-item>
+    </ion-list>
+  </div>
+
+  <!-- Empty State -->
+  <div *ngIf="!loading && items.length === 0" class="empty-state">
+    <i class="bi bi-film display-1 text-primary mb-3"></i>
+    <h4 class="fw-bold">Your Watchlist is Empty</h4>
+    <p class="text-muted">Start searching for movies or TV shows to track what you want to watch!</p>
+    <button class="btn btn-primary btn-sm mt-3 px-3 py-2" (click)="goToSearch()">
+      <i class="bi bi-search me-1"></i> Search Titles
+    </button>
+  </div>
+
+  <!-- Watchlist Items -->
+  <div *ngIf="items.length > 0">
+    <!-- Top Pagination Summary if multiple pages -->
+    <div class="d-flex justify-content-between align-items-center px-3 py-2 bg-dark border-bottom small text-muted">
+      <span>
+        <i class="bi bi-collection-play me-1 text-primary"></i>
+        Showing {{ (currentPage - 1) * pageSize + 1 }}-{{ (currentPage - 1) * pageSize + items.length }} of {{ totalItems }}
+      </span>
+      <span *ngIf="totalPages > 1" class="badge bg-secondary">Page {{ currentPage }} / {{ totalPages }}</span>
+    </div>
+
+    <ion-list>
+      <ion-item-sliding *ngFor="let item of items">
+        <ion-item button (click)="goToItem(item.backendId)">
+          <ion-thumbnail slot="start">
+            <img [src]="item.posterPath ? (item.posterPath.startsWith('http') ? item.posterPath : 'https://image.tmdb.org/t/p/w200' + item.posterPath) : 'assets/placeholder.svg'" 
+                 onerror="this.src='assets/placeholder.svg'"/>
+          </ion-thumbnail>
+          <ion-label>
+            <h2>{{ item.title }}</h2>
+            <p class="d-flex align-items-center flex-wrap gap-1 mt-1">
+              <span class="badge bg-primary text-uppercase">
+                <i class="bi bi-film me-1" *ngIf="item.mediaType === 'movie'"></i>
+                <i class="bi bi-tv me-1" *ngIf="item.mediaType === 'tv'"></i>
+                {{ item.mediaType }}
+              </span>
+              <span *ngIf="item.releaseDate" class="text-muted small ms-1">
+                <i class="bi bi-calendar3 me-1"></i>{{ item.releaseDate | slice:0:4 }}
+              </span>
+              <span *ngIf="item.rating" class="text-warning small ms-1">
+                <i class="bi bi-star-fill me-1"></i>{{ item.rating | number:'1.1-1' }}
+              </span>
+            </p>
+          </ion-label>
+          <i class="bi bi-check-circle-fill text-success fs-4 me-2" *ngIf="item.watched" title="Watched" slot="end"></i>
+          <i class="bi bi-clock-history text-secondary fs-4 me-2" *ngIf="!item.watched" title="To Watch" slot="end"></i>
+        </ion-item>
+        
+        <ion-item-options side="end">
+          <ion-item-option color="danger" (click)="deleteItem(item.backendId)">
+            <i class="bi bi-trash3-fill fs-5"></i>
+          </ion-item-option>
+        </ion-item-options>
+      </ion-item-sliding>
+    </ion-list>
+
+    <!-- Pagination Controls (Max 10 per page) -->
+    <div class="d-flex justify-content-between align-items-center px-3 py-3 border-top" *ngIf="totalItems > pageSize">
+      <button class="btn btn-sm btn-outline-primary" [disabled]="currentPage <= 1" (click)="prevPage()">
+        <i class="bi bi-chevron-left me-1"></i> Previous
+      </button>
+      <span class="text-muted small">
+        Page <strong>{{ currentPage }}</strong> of <strong>{{ totalPages }}</strong>
+      </span>
+      <button class="btn btn-sm btn-outline-primary" [disabled]="currentPage >= totalPages" (click)="nextPage()">
+        Next <i class="bi bi-chevron-right ms-1"></i>
+      </button>
+    </div>
+  </div>
+
+  <ion-fab vertical="bottom" horizontal="end" slot="fixed">
+    <ion-fab-button (click)="goToSearch()">
+      <i class="bi bi-search fs-5"></i>
+    </ion-fab-button>
+  </ion-fab>
+</ion-content>

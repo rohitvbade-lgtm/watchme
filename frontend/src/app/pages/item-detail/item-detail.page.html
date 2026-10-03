@@ -1,0 +1,45 @@
+<ion-header>
+  <ion-toolbar>
+    <ion-buttons slot="start">
+      <ion-back-button defaultHref="/search"></ion-back-button>
+    </ion-buttons>
+    <ion-title>{{ result?.title }}</ion-title>
+  </ion-toolbar>
+</ion-header>
+
+<ion-content>
+  <div *ngIf="result" class="detail-container">
+    <div class="poster-container text-center pt-3">
+      <img [src]="result.posterUrl || 'assets/placeholder.svg'" class="poster-img shadow rounded" />
+    </div>
+    
+    <div class="info-section ion-padding">
+      <h1 class="fw-bold">{{ result.title }}</h1>
+      <p class="subtitle d-flex align-items-center flex-wrap gap-1 my-2">
+        <span class="badge bg-primary text-uppercase">
+          <i class="bi bi-film me-1" *ngIf="result.mediaType === 'movie'"></i>
+          <i class="bi bi-tv me-1" *ngIf="result.mediaType === 'tv'"></i>
+          {{ result.mediaType }}
+        </span>
+        <span *ngIf="result.releaseDate" class="text-muted small ms-2">
+          <i class="bi bi-calendar3 me-1"></i>{{ result.releaseDate | slice:0:4 }}
+        </span>
+      </p>
+      
+      <div class="genres d-flex flex-wrap gap-1 my-2" *ngIf="result.genres && result.genres.length > 0">
+        <span *ngFor="let g of result.genres" class="badge bg-dark border text-light">
+          {{ g }}
+        </span>
+      </div>
+
+      <p class="overview mt-3">{{ result.overview }}</p>
+
+      <ion-button expand="block" (click)="addToWatchlist()" [disabled]="inWatchlist || adding" class="ion-margin-top" [color]="inWatchlist ? 'success' : 'primary'">
+        <ion-spinner *ngIf="adding" slot="start"></ion-spinner>
+        <i *ngIf="!adding && inWatchlist" class="bi bi-check2-circle me-2 fs-5"></i>
+        <i *ngIf="!adding && !inWatchlist" class="bi bi-bookmark-plus me-2 fs-5"></i>
+        {{ inWatchlist ? 'IN WATCHLIST ✓' : 'ADD TO WATCHLIST' }}
+      </ion-button>
+    </div>
+  </div>
+</ion-content>

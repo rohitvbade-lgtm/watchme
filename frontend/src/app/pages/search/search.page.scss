@@ -1,0 +1,20 @@
+.empty-state {
+  text-align: center;
+  padding: 2rem;
+  color: var(--ion-color-medium);
+}
+
+.overview {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;  
+  overflow: hidden;
+  font-size: 0.8rem;
+  margin-top: 4px;
+}
+
+ion-thumbnail {
+  --border-radius: 8px;
+  width: 60px;
+  height: 90px;
+}

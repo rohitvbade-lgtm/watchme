@@ -1,0 +1,23 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: watchme_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: watchme
+      POSTGRES_PASSWORD: watchme
+      POSTGRES_DB: watchme
+    ports:
+      - "5432:5432"
+    volumes:
+      - watchme_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U watchme -d watchme"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  watchme_pgdata:
