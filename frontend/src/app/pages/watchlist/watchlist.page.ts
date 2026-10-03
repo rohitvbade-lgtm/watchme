@@ -3,6 +3,9 @@ import { Router } from '@angular/router';
 import { WatchlistService } from '../../core/services/watchlist.service';
 import { LocalDbService } from '../../core/services/local-db.service';
 import { LocalWatchlistItem } from '../../core/models/watchlist-item.model';
+import { ApiService } from '../../core/services/api.service';
+import { DeviceService } from '../../core/services/device.service';
+import { NotificationService } from '../../core/services/notification.service';
 import { Subscription } from 'rxjs';
 
 @Component({
@@ -14,6 +17,7 @@ export class WatchlistPage implements OnInit, OnDestroy {
   allItems: LocalWatchlistItem[] = [];
   items: LocalWatchlistItem[] = [];
   loading = true;
+  triggeringNudge = false;
 
   // Pagination state (max 10 items viewed at once)
   currentPage = 1;
@@ -27,8 +31,34 @@ export class WatchlistPage implements OnInit, OnDestroy {
     private router: Router,
     private watchlistService: WatchlistService,
     private localDb: LocalDbService,
+    private apiService: ApiService,
+    private deviceService: DeviceService,
+    private notificationService: NotificationService,
     private cdr: ChangeDetectorRef
   ) {}
+
+  triggerTestNudge() {
+    this.triggeringNudge = true;
+    const deviceId = this.deviceService.getDeviceId();
+    this.apiService.testNotification(deviceId).subscribe({
+      next: async (res) => {
+        this.triggeringNudge = false;
+        this.cdr.markForCheck();
+        if (res && res.text) {
+          await this.notificationService.showNotification(
+            res.itemTitle,
+            res.text,
+            res.itemImageUrl,
+            res.watchlistItemId
+          );
+        }
+      },
+      error: () => {
+        this.triggeringNudge = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
 
   ngOnInit() {
     this.loadData();

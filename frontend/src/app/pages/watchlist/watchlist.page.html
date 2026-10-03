@@ -6,6 +6,11 @@
         <span>Watch<span class="text-primary fw-bold">Me</span></span>
       </div>
     </ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="triggerTestNudge()" title="Simulate notification nudge" [disabled]="triggeringNudge">
+        <i class="bi bi-bell-fill fs-5 text-warning"></i>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 

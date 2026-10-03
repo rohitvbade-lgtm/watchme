@@ -34,3 +34,67 @@
   --ion-color-primary-shade: #3171e0;
   --ion-color-primary-tint: #4c8dff;
 }
+
+/* Custom In-App Notification Toast Styling */
+ion-toast.watchme-toast {
+  --background: #181922;
+  --color: #ffffff;
+  --box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+  --border-radius: 14px;
+  --border-color: #3880ff;
+  --border-width: 1.5px;
+  --border-style: solid;
+  --max-width: 500px;
+  margin: 12px auto;
+
+  &::part(container) {
+    padding: 10px 14px;
+  }
+
+  &::part(header) {
+    font-weight: 700;
+    font-size: 1rem;
+    color: #4c8dff;
+    letter-spacing: 0.3px;
+  }
+
+  &::part(message) {
+    overflow: visible;
+    white-space: normal;
+  }
+
+  &::part(button) {
+    color: #3880ff;
+    font-weight: 700;
+  }
+}
+
+.watchme-toast-content {
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+  margin-top: 6px !important;
+}
+
+.watchme-toast-poster {
+  width: 44px !important;
+  height: 66px !important;
+  min-width: 44px !important;
+  max-width: 44px !important;
+  min-height: 66px !important;
+  max-height: 66px !important;
+  object-fit: cover !important;
+  border-radius: 6px !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  display: block !important;
+}
+
+.watchme-toast-text {
+  flex: 1 !important;
+  min-width: 0 !important;
+  font-size: 0.9rem !important;
+  line-height: 1.35 !important;
+  color: #e2e8f0 !important;
+}

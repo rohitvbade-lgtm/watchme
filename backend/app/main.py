@@ -16,12 +16,13 @@ scheduler = AsyncIOScheduler()
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup
-    logger.info("Starting up...")
+    from datetime import datetime
     scheduler.add_job(
         generate_and_send_notifications,
         'interval',
         seconds=settings.notification_interval_seconds,
-        id='notification_job'
+        id='notification_job',
+        next_run_time=datetime.now()
     )
     scheduler.start()
     yield

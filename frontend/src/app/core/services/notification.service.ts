@@ -5,6 +5,7 @@ import { Capacitor } from '@capacitor/core';
 import { ApiService } from './api.service';
 import { DeviceService } from './device.service';
 import { ToastController } from '@ionic/angular';
+import { IonicSafeString } from '@ionic/core';
 
 @Injectable({
   providedIn: 'root'
@@ -136,15 +137,15 @@ export class NotificationService {
     let messageHtml: string;
     if (imageUrl) {
       messageHtml = `
-        <div style="display: flex; align-items: center; gap: 12px; margin-top: 4px;">
-          <img src="${imageUrl}" alt="${escapedTitle}" style="width: 44px; height: 66px; object-fit: cover; border-radius: 6px; flex-shrink: 0; box-shadow: 0 2px 6px rgba(0,0,0,0.5);" onerror="this.style.display='none'"/>
-          <div style="flex: 1; min-width: 0; font-size: 0.9rem; line-height: 1.35; color: #ffffff;">
+        <div class="watchme-toast-content">
+          <img src="${imageUrl}" width="44" height="66" alt="${escapedTitle}" class="watchme-toast-poster" onerror="this.style.display='none'"/>
+          <div class="watchme-toast-text">
             ${escapedText}
           </div>
         </div>
       `;
     } else {
-      messageHtml = escapedText;
+      messageHtml = `<div class="watchme-toast-text">${escapedText}</div>`;
     }
 
     const buttons: any[] = [];
@@ -161,10 +162,11 @@ export class NotificationService {
     try {
       const toast = await this.toastCtrl.create({
         header: `🎬 ${title || 'WatchMe'}`,
-        message: messageHtml,
+        message: new IonicSafeString(messageHtml) as any,
         duration: 8000,
         position: 'top',
         color: 'primary',
+        cssClass: 'watchme-toast',
         buttons
       });
       await toast.present();
