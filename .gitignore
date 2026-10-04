@@ -7,8 +7,18 @@
 *firebase*.json
 *adminsdk*.json
 watchme-*.json
+google-services.json
+GoogleService-Info.plist
 Ignore This/
 ignoreThis.txt
+
+# Android signing keystore — never commit!
+release-key
+*.jks
+*.keystore
+
+# Production environment (contains hardcoded API keys)
+environment.prod.ts
 
 # Python
 __pycache__/
