@@ -102,7 +102,7 @@ export class NotificationService {
       }
     });
 
-    // Poll every 4 seconds for new notifications created by backend scheduler or test endpoint
+    // Poll every 30 seconds for new notifications created by backend scheduler or test endpoint
     this.pollingInterval = setInterval(() => {
       this.apiService.getNotifications(deviceId).subscribe({
         next: async (notifs) => {
@@ -127,7 +127,7 @@ export class NotificationService {
         },
         error: (err) => console.error('[NotificationService] Polling error:', err)
       });
-    }, 4000);
+    }, 30000);
   }
 
   async showNotification(title: string, text: string, imageUrl?: string, watchlistItemId?: string): Promise<void> {
@@ -137,15 +137,15 @@ export class NotificationService {
     let messageHtml: string;
     if (imageUrl) {
       messageHtml = `
-        <div class="watchme-toast-content">
-          <img src="${imageUrl}" width="44" height="66" alt="${escapedTitle}" class="watchme-toast-poster" onerror="this.style.display='none'"/>
-          <div class="watchme-toast-text">
+        <div class="watchme-toast-content" style="display: flex; flex-direction: row; align-items: flex-start; gap: 12px; margin-top: 4px; width: 100%;">
+          <img src="${imageUrl}" width="44" height="66" alt="${escapedTitle}" class="watchme-toast-poster" style="width: 44px; min-width: 44px; max-width: 44px; height: 66px; min-height: 66px; max-height: 66px; object-fit: cover; border-radius: 6px; flex-shrink: 0; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25); border: 1px solid var(--app-toast-poster-border, rgba(128,128,128,0.2)); display: block;" onerror="this.style.display='none'"/>
+          <div class="watchme-toast-text" style="flex: 1; min-width: 0; font-size: 0.9rem; line-height: 1.35; color: var(--app-toast-text-color, inherit); word-break: break-word;">
             ${escapedText}
           </div>
         </div>
       `;
     } else {
-      messageHtml = `<div class="watchme-toast-text">${escapedText}</div>`;
+      messageHtml = `<div class="watchme-toast-text" style="font-size: 0.9rem; line-height: 1.35; color: var(--app-toast-text-color, inherit);">${escapedText}</div>`;
     }
 
     const buttons: any[] = [];
@@ -165,7 +165,6 @@ export class NotificationService {
         message: new IonicSafeString(messageHtml) as any,
         duration: 8000,
         position: 'top',
-        color: 'primary',
         cssClass: 'watchme-toast',
         buttons
       });
@@ -177,7 +176,7 @@ export class NotificationService {
         message: text,
         duration: 6000,
         position: 'top',
-        color: 'primary',
+        cssClass: 'watchme-toast',
         buttons
       });
       await fallback.present();

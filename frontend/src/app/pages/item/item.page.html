@@ -4,6 +4,11 @@
       <ion-back-button defaultHref="/watchlist"></ion-back-button>
     </ion-buttons>
     <ion-title>{{ item?.title }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="toggleTheme()" [title]="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'" aria-label="Toggle dark/light mode" class="theme-toggle-btn">
+        <i [class]="isDarkMode ? 'bi bi-sun-fill text-warning fs-5' : 'bi bi-moon-stars-fill fs-5 text-theme-icon'"></i>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
@@ -14,7 +19,7 @@
     </div>
     
     <div class="header-content ion-padding">
-      <img [src]="getPosterUrl(item.posterPath)" class="small-poster shadow" />
+      <img [src]="getPosterUrl(item.posterPath)" class="small-poster shadow" (error)="onImageError($event)" />
       <div class="title-area">
         <h1>{{ item.title }}</h1>
         <p class="d-flex align-items-center flex-wrap gap-1 mt-1">
@@ -23,7 +28,7 @@
             <i class="bi bi-tv me-1" *ngIf="item.mediaType === 'tv'"></i>
             {{ item.mediaType }}
           </span>
-          <span *ngIf="item.releaseDate" class="text-light small ms-1">
+          <span *ngIf="item.releaseDate" class="text-theme-muted small ms-1">
             <i class="bi bi-calendar3 me-1"></i>{{ item.releaseDate | slice:0:4 }}
           </span>
           <span *ngIf="item.rating" class="text-warning small ms-1">
@@ -39,8 +44,21 @@
         {{ item.watched ? 'MARK UNWATCHED' : 'MARK WATCHED' }}
       </ion-button>
 
+      <!-- Watch Again — only relevant once the item is watched -->
+      <ion-button
+        *ngIf="item.watched"
+        expand="block"
+        fill="outline"
+        [color]="item.rewatch ? 'warning' : 'tertiary'"
+        class="ion-margin-top"
+        (click)="toggleRewatch()"
+      >
+        <i [class]="item.rewatch ? 'bi bi-arrow-repeat me-2 text-warning' : 'bi bi-arrow-repeat me-2'"></i>
+        {{ item.rewatch ? 'REMOVE FROM WATCH AGAIN' : 'WATCH AGAIN' }}
+      </ion-button>
+
       <div class="genres d-flex flex-wrap gap-1 my-2" *ngIf="genres.length > 0">
-        <span *ngFor="let g of genres" class="badge bg-dark border text-light">
+        <span *ngFor="let g of genres" class="badge genre-badge">
           {{ g }}
         </span>
       </div>

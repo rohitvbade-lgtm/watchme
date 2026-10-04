@@ -1,13 +1,14 @@
 import { APP_INITIALIZER, NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
 import { RouteReuseStrategy } from '@angular/router';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 
 import { IonicModule, IonicRouteStrategy } from '@ionic/angular';
 
 import { AppComponent } from './app.component';
 import { AppRoutingModule } from './app-routing.module';
 import { LocalDbService } from './core/services/local-db.service';
+import { ApiKeyInterceptor } from './core/interceptors/api-key.interceptor';
 
 export function initializeApp(localDbService: LocalDbService) {
   return () => localDbService.initDB();
@@ -30,6 +31,11 @@ export function initializeApp(localDbService: LocalDbService) {
       provide: APP_INITIALIZER,
       useFactory: initializeApp,
       deps: [LocalDbService],
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: ApiKeyInterceptor,
       multi: true
     }
   ],

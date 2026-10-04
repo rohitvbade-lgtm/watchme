@@ -7,10 +7,48 @@
       </div>
     </ion-title>
     <ion-buttons slot="end">
+      <ion-button (click)="toggleTheme()" [title]="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'" aria-label="Toggle dark/light mode" class="theme-toggle-btn">
+        <i [class]="isDarkMode ? 'bi bi-sun-fill text-warning fs-5' : 'bi bi-moon-stars-fill fs-5 text-theme-icon'"></i>
+      </ion-button>
       <ion-button (click)="triggerTestNudge()" title="Simulate notification nudge" [disabled]="triggeringNudge">
         <i class="bi bi-bell-fill fs-5 text-warning"></i>
       </ion-button>
     </ion-buttons>
+  </ion-toolbar>
+
+  <!-- Search bar -->
+  <ion-toolbar class="search-toolbar">
+    <div class="search-wrapper px-3 py-1">
+      <div class="search-input-container">
+        <i class="bi bi-search search-icon"></i>
+        <ion-input
+          class="search-input"
+          placeholder="Search your watchlist…"
+          [value]="searchQuery"
+          (ionInput)="onSearchChange($event)"
+          clearInput="false"
+        ></ion-input>
+        <button *ngIf="searchQuery" class="clear-btn" (click)="clearSearch()" aria-label="Clear search">
+          <i class="bi bi-x-circle-fill"></i>
+        </button>
+      </div>
+    </div>
+  </ion-toolbar>
+
+  <!-- Category tabs -->
+  <ion-toolbar class="category-toolbar">
+    <div class="category-tabs px-2">
+      <button
+        *ngFor="let cat of categories"
+        class="cat-tab"
+        [class.active]="activeCategory === cat.key"
+        (click)="setCategory(cat.key)"
+      >
+        <i class="bi {{ cat.icon }} me-1"></i>
+        {{ cat.label }}
+        <span class="cat-badge" *ngIf="countForCategory(cat.key) > 0">{{ countForCategory(cat.key) }}</span>
+      </button>
+    </div>
   </ion-toolbar>
 </ion-header>
 
@@ -20,7 +58,7 @@
   </ion-refresher>
 
   <!-- Loading Skeletons -->
-  <div *ngIf="loading && items.length === 0" class="ion-padding">
+  <div *ngIf="loading && allItems.length === 0" class="ion-padding">
     <ion-list>
       <ion-item *ngFor="let i of [1,2,3,4,5]">
         <ion-thumbnail slot="start">
@@ -34,8 +72,8 @@
     </ion-list>
   </div>
 
-  <!-- Empty State -->
-  <div *ngIf="!loading && items.length === 0" class="empty-state">
+  <!-- Empty State (no items at all) -->
+  <div *ngIf="!loading && allItems.length === 0" class="empty-state">
     <i class="bi bi-film display-1 text-primary mb-3"></i>
     <h4 class="fw-bold">Your Watchlist is Empty</h4>
     <p class="text-muted">Start searching for movies or TV shows to track what you want to watch!</p>
@@ -44,23 +82,37 @@
     </button>
   </div>
 
+  <!-- No results for current filter -->
+  <div *ngIf="!loading && allItems.length > 0 && filteredItems.length === 0" class="empty-state">
+    <i class="bi bi-search display-1 text-muted mb-3"></i>
+    <h4 class="fw-bold" *ngIf="searchQuery">No results for "{{ searchQuery }}"</h4>
+    <h4 class="fw-bold" *ngIf="!searchQuery">Nothing here yet</h4>
+    <p class="text-muted" *ngIf="activeCategory === 'up-next'">Everything is watched — great job!</p>
+    <p class="text-muted" *ngIf="activeCategory === 'watched'">Mark something as watched to see it here.</p>
+    <p class="text-muted" *ngIf="activeCategory === 'watch-again'">No items marked for re-watching yet.</p>
+    <p class="text-muted" *ngIf="activeCategory === 'all' && searchQuery">Try a different search term.</p>
+    <button *ngIf="searchQuery" class="btn btn-outline-secondary btn-sm mt-3" (click)="clearSearch()">
+      <i class="bi bi-x me-1"></i> Clear Search
+    </button>
+  </div>
+
   <!-- Watchlist Items -->
-  <div *ngIf="items.length > 0">
-    <!-- Top Pagination Summary if multiple pages -->
-    <div class="d-flex justify-content-between align-items-center px-3 py-2 bg-dark border-bottom small text-muted">
+  <div *ngIf="filteredItems.length > 0">
+    <!-- Summary bar -->
+    <div class="d-flex justify-content-between align-items-center px-3 py-2 subtle-surface-bar border-bottom small">
       <span>
         <i class="bi bi-collection-play me-1 text-primary"></i>
-        Showing {{ (currentPage - 1) * pageSize + 1 }}-{{ (currentPage - 1) * pageSize + items.length }} of {{ totalItems }}
+        Showing {{ (currentPage - 1) * pageSize + 1 }}–{{ (currentPage - 1) * pageSize + items.length }} of {{ totalItems }}
       </span>
-      <span *ngIf="totalPages > 1" class="badge bg-secondary">Page {{ currentPage }} / {{ totalPages }}</span>
+      <span *ngIf="totalPages > 1" class="badge" [ngClass]="isDarkMode ? 'bg-secondary' : 'bg-secondary-subtle text-secondary-emphasis border'">Page {{ currentPage }} / {{ totalPages }}</span>
     </div>
 
     <ion-list>
       <ion-item-sliding *ngFor="let item of items">
         <ion-item button (click)="goToItem(item.backendId)">
           <ion-thumbnail slot="start">
-            <img [src]="item.posterPath ? (item.posterPath.startsWith('http') ? item.posterPath : 'https://image.tmdb.org/t/p/w200' + item.posterPath) : 'assets/placeholder.svg'" 
-                 onerror="this.src='assets/placeholder.svg'"/>
+            <img [src]="item.posterPath ? (item.posterPath.startsWith('http') ? item.posterPath : 'https://image.tmdb.org/t/p/w200' + item.posterPath) : placeholderUrl"
+                 (error)="onImageError($event)"/>
           </ion-thumbnail>
           <ion-label>
             <h2>{{ item.title }}</h2>
@@ -78,10 +130,24 @@
               </span>
             </p>
           </ion-label>
-          <i class="bi bi-check-circle-fill text-success fs-4 me-2" *ngIf="item.watched" title="Watched" slot="end"></i>
-          <i class="bi bi-clock-history text-secondary fs-4 me-2" *ngIf="!item.watched" title="To Watch" slot="end"></i>
+
+          <!-- Status badge -->
+          <div slot="end" class="status-badge me-2">
+            <!-- Watch Again -->
+            <ng-container *ngIf="item.rewatch === 1">
+              <i class="bi bi-arrow-repeat text-info fs-4" title="Watch Again"></i>
+            </ng-container>
+            <!-- Watched (not marked for rewatch) -->
+            <ng-container *ngIf="item.rewatch !== 1 && item.watched === 1">
+              <i class="bi bi-check-circle-fill text-success fs-4" title="Watched"></i>
+            </ng-container>
+            <!-- Up Next -->
+            <ng-container *ngIf="item.rewatch !== 1 && item.watched !== 1">
+              <i class="bi bi-clock text-secondary fs-4" title="Up Next"></i>
+            </ng-container>
+          </div>
         </ion-item>
-        
+
         <ion-item-options side="end">
           <ion-item-option color="danger" (click)="deleteItem(item.backendId)">
             <i class="bi bi-trash3-fill fs-5"></i>
@@ -90,7 +156,7 @@
       </ion-item-sliding>
     </ion-list>
 
-    <!-- Pagination Controls (Max 10 per page) -->
+    <!-- Pagination Controls -->
     <div class="d-flex justify-content-between align-items-center px-3 py-3 border-top" *ngIf="totalItems > pageSize">
       <button class="btn btn-sm btn-outline-primary" [disabled]="currentPage <= 1" (click)="prevPage()">
         <i class="bi bi-chevron-left me-1"></i> Previous

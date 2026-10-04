@@ -23,7 +23,7 @@ export class LocalDbService {
     }
 
     try {
-      this.db = await this.sqlite.createConnection(this.dbName, false, 'no-encryption', 1, false);
+      this.db = await this.sqlite.createConnection(this.dbName, false, 'no-encryption', 2, false);
       await this.db.open();
 
       const schema = `
@@ -41,6 +41,7 @@ export class LocalDbService {
           genres TEXT,
           watched INTEGER DEFAULT 0,
           watched_at TEXT,
+          rewatch INTEGER DEFAULT 0,
           added_at TEXT DEFAULT CURRENT_TIMESTAMP,
           local_note TEXT,
           rating REAL,
@@ -52,6 +53,13 @@ export class LocalDbService {
         );
       `;
       await this.db.execute(schema);
+
+      // Migrate existing DB: add rewatch column if missing
+      try {
+        await this.db.run('ALTER TABLE watchlist_items ADD COLUMN rewatch INTEGER DEFAULT 0');
+      } catch (e) {
+        // Column already exists – ignore the error
+      }
     } catch (error) {
       console.error('Error initializing SQLite:', error);
     }
@@ -140,14 +148,14 @@ export class LocalDbService {
     const sql = `
       INSERT OR REPLACE INTO watchlist_items 
       (id, backend_id, provider_id, media_type, provider, title, poster_path, backdrop_path, 
-       overview, release_date, genres, watched, watched_at, added_at, local_note, rating, media_item_id)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+       overview, release_date, genres, watched, watched_at, rewatch, added_at, local_note, rating, media_item_id)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
     
     await this.db.run(sql, [
       item.id, item.backendId, item.providerId, item.mediaType, item.provider, item.title,
       item.posterPath || null, item.backdropPath || null, item.overview, item.releaseDate || null,
-      item.genres, item.watched, item.watchedAt || null, item.addedAt, item.localNote || null,
+      item.genres, item.watched, item.watchedAt || null, item.rewatch ?? 0, item.addedAt, item.localNote || null,
       item.rating || null, item.mediaItemId
     ]);
   }
@@ -197,6 +205,7 @@ export class LocalDbService {
       genres: row.genres,
       watched: row.watched,
       watchedAt: row.watched_at,
+      rewatch: row.rewatch ?? 0,
       addedAt: row.added_at,
       localNote: row.local_note,
       rating: row.rating,

@@ -24,6 +24,7 @@ class WatchlistItemSchema(BaseModel):
     mediaItem: Optional[MediaItemSchema] = Field(default=None, validation_alias=AliasChoices("media_item", "mediaItem"))
     watched: bool = False
     watchedAt: Optional[datetime] = Field(default=None, validation_alias=AliasChoices("watched_at", "watchedAt"))
+    rewatch: bool = False
     addedAt: Optional[datetime] = Field(default=None, validation_alias=AliasChoices("added_at", "addedAt"))
 
     @computed_field
@@ -55,6 +56,7 @@ class WatchlistItemSchema(BaseModel):
             media_item=item.media_item,
             watched=bool(item.watched),
             watched_at=item.watched_at,
+            rewatch=bool(item.rewatch) if item.rewatch is not None else False,
             added_at=item.added_at,
         )
 

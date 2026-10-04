@@ -163,5 +163,43 @@ async def mark_unwatched(
         
     item.watched = False
     item.watched_at = None
+    item.rewatch = False
+    await db.commit()
+    return WatchlistItemSchema.from_orm_item(item)
+@router.post("/{id}/rewatch")
+async def mark_rewatch(
+    id: uuid.UUID,
+    device_id: str = Query(...),
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(WatchlistItem).where(WatchlistItem.id == id, WatchlistItem.device_id == device_id).options(selectinload(WatchlistItem.media_item))
+    result = await db.execute(stmt)
+    item = result.scalar_one_or_none()
+
+    if not item:
+        raise HTTPException(status_code=404, detail="Watchlist item not found")
+
+    # An item marked for rewatch is implicitly already watched
+    item.watched = True
+    if not item.watched_at:
+        item.watched_at = datetime.now(timezone.utc)
+    item.rewatch = True
+    await db.commit()
+    return WatchlistItemSchema.from_orm_item(item)
+
+@router.post("/{id}/unrewatch")
+async def mark_unrewatch(
+    id: uuid.UUID,
+    device_id: str = Query(...),
+    db: AsyncSession = Depends(get_db)
+):
+    stmt = select(WatchlistItem).where(WatchlistItem.id == id, WatchlistItem.device_id == device_id).options(selectinload(WatchlistItem.media_item))
+    result = await db.execute(stmt)
+    item = result.scalar_one_or_none()
+
+    if not item:
+        raise HTTPException(status_code=404, detail="Watchlist item not found")
+
+    item.rewatch = False
     await db.commit()
     return WatchlistItemSchema.from_orm_item(item)

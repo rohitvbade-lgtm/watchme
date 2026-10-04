@@ -69,6 +69,18 @@ export class ApiService {
       .pipe(catchError(this.handleError<WatchlistItem>('markUnwatched')));
   }
 
+  markForRewatch(id: string, deviceId: string): Observable<WatchlistItem> {
+    const params = new HttpParams().set('device_id', deviceId);
+    return this.http.post<WatchlistItem>(`${this.baseUrl}/watchlist/${id}/rewatch`, {}, { params })
+      .pipe(catchError(this.handleError<WatchlistItem>('markForRewatch')));
+  }
+
+  unmarkRewatch(id: string, deviceId: string): Observable<WatchlistItem> {
+    const params = new HttpParams().set('device_id', deviceId);
+    return this.http.post<WatchlistItem>(`${this.baseUrl}/watchlist/${id}/unrewatch`, {}, { params })
+      .pipe(catchError(this.handleError<WatchlistItem>('unmarkRewatch')));
+  }
+
   registerDevice(deviceId: string, platform: string, pushToken?: string): Observable<any> {
     return this.http.post(`${this.baseUrl}/devices/register`, {
       deviceId,

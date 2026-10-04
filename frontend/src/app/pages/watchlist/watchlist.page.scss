@@ -3,12 +3,18 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 80%;
+  height: 60%;
   text-align: center;
   padding: 2rem;
-  color: var(--ion-color-medium);
+  color: var(--app-text-muted, var(--ion-color-medium));
 }
 
 ion-thumbnail {
   --border-radius: 8px;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }

@@ -1,0 +1,71 @@
+name: Deploy WatchMe to Oracle Cloud VM
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/**'
+      - '.github/workflows/deploy.yml'
+
+jobs:
+  deploy:
+    name: Deploy to Oracle Cloud VM
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: SSH and Deploy to Oracle Cloud
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VM_HOST }}
+          username: ${{ secrets.VM_USER }}
+          key: ${{ secrets.VM_SSH_KEY }}
+          port: 22
+          script_stop: true
+          script: |
+            set -e
+            echo "=========================================================="
+            echo "🚀 Starting Automated WatchMe Deployment"
+            echo "=========================================================="
+
+            # 1. Clone repository if not already present on VM
+            if [ ! -d "$HOME/watchme/.git" ]; then
+              echo "Cloning repository..."
+              git clone https://github.com/rohitvbade-lgtm/watchme.git "$HOME/watchme"
+            fi
+
+            # 2. Update to latest commit on main branch
+            cd "$HOME/watchme"
+            echo "Pulling latest changes from origin/main..."
+            git fetch origin main
+            git reset --hard origin/main
+
+            # 3. Ensure production .env exists
+            if [ ! -f "$HOME/watchme/backend/.env" ]; then
+              # If .env was placed in ~/backend/.env previously, copy it
+              if [ -f "$HOME/backend/.env" ]; then
+                cp "$HOME/backend/.env" "$HOME/watchme/backend/.env"
+              fi
+            fi
+
+            # Ensure Firebase credentials JSON exists if present in ~/backend
+            if [ ! -f "$HOME/watchme/backend/watchme-166bb-firebase-adminsdk-fbsvc-66bfeccd20.json" ]; then
+              if [ -f "$HOME/backend/watchme-166bb-firebase-adminsdk-fbsvc-66bfeccd20.json" ]; then
+                cp "$HOME/backend/watchme-166bb-firebase-adminsdk-fbsvc-66bfeccd20.json" "$HOME/watchme/backend/"
+              fi
+            fi
+
+            if [ ! -f "$HOME/watchme/backend/.env" ]; then
+              echo "❌ Error: $HOME/watchme/backend/.env is missing on the VM!"
+              echo "Please copy your .env to $HOME/watchme/backend/.env before running deployment."
+              exit 1
+            fi
+
+            # 4. Run automated deployment script (Docker build, Caddy TLS, Alembic migrations)
+            cd "$HOME/watchme/backend"
+            chmod +x scripts/deploy.sh
+            ./scripts/deploy.sh
+
+            echo "=========================================================="
+            echo "🎉 Deployment Finished Successfully!"
+            echo "=========================================================="

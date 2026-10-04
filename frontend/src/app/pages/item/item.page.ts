@@ -7,6 +7,7 @@ import { ApiService } from '../../core/services/api.service';
 import { DeviceService } from '../../core/services/device.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { LocalWatchlistItem } from '../../core/models/watchlist-item.model';
+import { ThemeService } from '../../core/services/theme.service';
 
 @Component({
   selector: 'app-item',
@@ -29,8 +30,27 @@ export class ItemPage implements OnInit {
     private notificationService: NotificationService,
     private alertCtrl: AlertController,
     private toastCtrl: ToastController,
+    public themeService: ThemeService,
     private cdr: ChangeDetectorRef
   ) {}
+
+  get isDarkMode(): boolean {
+    return this.themeService.isDarkMode;
+  }
+
+  get placeholderUrl(): string {
+    return this.themeService.placeholderUrl;
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
+
+  onImageError(event: any): void {
+    if (event?.target) {
+      event.target.src = this.placeholderUrl;
+    }
+  }
 
   async ngOnInit() {
     this.backendId = this.route.snapshot.paramMap.get('id')!;
@@ -50,7 +70,7 @@ export class ItemPage implements OnInit {
   }
 
   getPosterUrl(path?: string): string {
-    if (!path) return 'assets/placeholder.svg';
+    if (!path) return this.placeholderUrl;
     if (path.startsWith('http')) return path;
     return `https://image.tmdb.org/t/p/w300${path}`;
   }
@@ -64,11 +84,23 @@ export class ItemPage implements OnInit {
   async toggleWatched() {
     if (!this.item) return;
     const currentlyWatched = this.item.watched === 1;
-    
+
     if (currentlyWatched) {
+      // Marking unwatched also clears any rewatch flag
       this.watchlistService.markUnwatched(this.backendId).subscribe(() => this.loadItem());
     } else {
       this.watchlistService.markWatched(this.backendId).subscribe(() => this.loadItem());
+    }
+  }
+
+  async toggleRewatch() {
+    if (!this.item) return;
+    const currentlyRewatch = this.item.rewatch === 1;
+
+    if (currentlyRewatch) {
+      this.watchlistService.unmarkRewatch(this.backendId).subscribe(() => this.loadItem());
+    } else {
+      this.watchlistService.markForRewatch(this.backendId).subscribe(() => this.loadItem());
     }
   }
 

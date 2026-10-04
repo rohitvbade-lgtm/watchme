@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { NotificationService } from './core/services/notification.service';
+import { ThemeService } from './core/services/theme.service';
 import { Platform } from '@ionic/angular';
 
 @Component({
@@ -10,6 +11,7 @@ import { Platform } from '@ionic/angular';
 export class AppComponent {
   constructor(
     private notificationService: NotificationService,
+    private themeService: ThemeService,
     private platform: Platform
   ) {
     this.initializeApp();

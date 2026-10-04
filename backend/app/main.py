@@ -7,6 +7,7 @@ import logging
 from app.config import get_settings
 from app.api import search, watchlist, devices, notifications
 from app.scheduler.jobs import generate_and_send_notifications
+from app.core.security import SecurityHeadersMiddleware, RateLimiterMiddleware, ApiKeyAuthMiddleware
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -32,6 +33,14 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title=settings.app_name, lifespan=lifespan)
 
+# Middlewares are executed in reverse order of addition:
+# 1. CORS handles cross-origin preflight requests
+# 2. Security headers inject hardened HTTP headers
+# 3. Rate limiter protects against traffic spikes / bot abuse
+# 4. API Key auth verifies client key if configured
+app.add_middleware(ApiKeyAuthMiddleware)
+app.add_middleware(RateLimiterMiddleware)
+app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,

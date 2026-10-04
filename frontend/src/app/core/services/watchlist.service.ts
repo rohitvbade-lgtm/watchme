@@ -59,7 +59,23 @@ export class WatchlistService {
   markUnwatched(backendId: string): Observable<void> {
     const deviceId = this.deviceService.getDeviceId();
     return this.apiService.markUnwatched(backendId, deviceId).pipe(
-      switchMap(() => from(this.localDb.update(backendId, { watched: 0, watchedAt: undefined }))),
+      switchMap(() => from(this.localDb.update(backendId, { watched: 0, watchedAt: undefined, rewatch: 0 }))),
+      tap(() => this.watchlistUpdated.next())
+    );
+  }
+
+  markForRewatch(backendId: string): Observable<void> {
+    const deviceId = this.deviceService.getDeviceId();
+    return this.apiService.markForRewatch(backendId, deviceId).pipe(
+      switchMap(() => from(this.localDb.update(backendId, { watched: 1, rewatch: 1 }))),
+      tap(() => this.watchlistUpdated.next())
+    );
+  }
+
+  unmarkRewatch(backendId: string): Observable<void> {
+    const deviceId = this.deviceService.getDeviceId();
+    return this.apiService.unmarkRewatch(backendId, deviceId).pipe(
+      switchMap(() => from(this.localDb.update(backendId, { rewatch: 0 }))),
       tap(() => this.watchlistUpdated.next())
     );
   }
@@ -122,6 +138,7 @@ export class WatchlistService {
 
     const watchedVal = (item.watched === true || item.watched === 1 || item.watched === '1') ? 1 : 0;
     const watchedAtVal = item.watchedAt || item.watched_at;
+    const rewatchVal = (item.rewatch === true || item.rewatch === 1 || item.rewatch === '1') ? 1 : 0;
     const addedAtVal = item.addedAt || item.added_at || new Date().toISOString();
     const ratingVal = mi.rating ?? item.rating;
     const mediaItemIdVal = mi.id || item.mediaItemId || item.media_item_id || '';
@@ -140,6 +157,7 @@ export class WatchlistService {
       genres: genresStr,
       watched: watchedVal,
       watchedAt: watchedAtVal,
+      rewatch: rewatchVal,
       addedAt: addedAtVal,
       rating: ratingVal,
       mediaItemId: mediaItemIdVal,

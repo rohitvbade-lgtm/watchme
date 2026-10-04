@@ -9,12 +9,17 @@
         <span>Search</span>
       </div>
     </ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="toggleTheme()" [title]="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'" aria-label="Toggle dark/light mode" class="theme-toggle-btn">
+        <i [class]="isDarkMode ? 'bi bi-sun-fill text-warning fs-5' : 'bi bi-moon-stars-fill fs-5 text-theme-icon'"></i>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
   <ion-toolbar>
     <ion-searchbar (ionInput)="onSearchChange($event)" placeholder="Search movies, TV shows..." animated="true"></ion-searchbar>
   </ion-toolbar>
   <!-- Media filter buttons -->
-  <div class="d-flex gap-2 px-3 py-2 bg-dark border-bottom">
+  <div class="d-flex gap-2 px-3 py-2 subtle-surface-bar border-bottom">
     <button class="btn btn-sm" [ngClass]="mediaTypeFilter === 'all' ? 'btn-primary' : 'btn-outline-secondary'" (click)="onFilterChange('all')">
       <i class="bi bi-grid-fill me-1"></i> All
     </button>
@@ -41,19 +46,19 @@
 
   <div *ngIf="!loading && results.length > 0">
     <!-- Top Result Counter -->
-    <div class="d-flex justify-content-between align-items-center px-3 py-2 bg-dark border-bottom small text-muted">
+    <div class="d-flex justify-content-between align-items-center px-3 py-2 subtle-surface-bar border-bottom small">
       <span>
         <i class="bi bi-check2-circle text-success me-1"></i>
         Showing {{ (currentPage - 1) * pageSize + 1 }}-{{ (currentPage - 1) * pageSize + results.length }} of {{ totalResults }}
       </span>
-      <span *ngIf="totalPages > 1" class="badge bg-secondary">Page {{ currentPage }} / {{ totalPages }}</span>
+      <span *ngIf="totalPages > 1" class="badge" [ngClass]="isDarkMode ? 'bg-secondary' : 'bg-secondary-subtle text-secondary-emphasis border'">Page {{ currentPage }} / {{ totalPages }}</span>
     </div>
 
     <ion-list>
       <ion-item *ngFor="let result of results" button (click)="goToDetail(result)">
         <ion-thumbnail slot="start">
-          <img [src]="result.posterUrl ? result.posterUrl : 'assets/placeholder.svg'" 
-               onerror="this.src='assets/placeholder.svg'"/>
+          <img [src]="result.posterUrl ? result.posterUrl : placeholderUrl" 
+               (error)="onImageError($event)"/>
         </ion-thumbnail>
         <ion-label class="ion-text-wrap">
           <h2 class="fw-bold">{{ result.title }}</h2>

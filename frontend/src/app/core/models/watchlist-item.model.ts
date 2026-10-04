@@ -9,6 +9,7 @@ export interface WatchlistItem {
   watched: boolean;
   watchedAt?: string;
   watched_at?: string;
+  rewatch?: boolean;
   addedAt?: string;
   added_at?: string;
   localNote?: string;
@@ -35,9 +36,11 @@ export interface LocalWatchlistItem {
   genres: string; // JSON string
   watched: number; // 0 or 1
   watchedAt?: string;
+  rewatch: number; // 0 or 1
   addedAt: string;
   localNote?: string;
   rating?: number;
   mediaItemId: string;
   backendId: string; // UUID from backend
 }
+

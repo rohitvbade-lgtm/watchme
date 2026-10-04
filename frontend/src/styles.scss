@@ -15,57 +15,182 @@
 @import "@ionic/angular/css/display.css";
 
 /**
- * Ionic Dark Mode
+ * Ionic Dark Mode (Class based)
  * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
+ * Automatically switches between light and dark palettes
+ * when .ion-palette-dark class is toggled on <html>.
  */
-
-@import "@ionic/angular/css/palettes/dark.always.css";
+@import "@ionic/angular/css/palettes/dark.class.css";
 
 @import "bootstrap/dist/css/bootstrap.min.css";
 @import "bootstrap-icons/font/bootstrap-icons.css";
 
+/* ==========================================================================
+   Design Tokens & Theme Variables
+   - Shared colors that work in both light & dark modes (Primary, Danger, Success, Warning, Info)
+   - Toggled colors that dynamically adapt when switching modes
+   ========================================================================== */
+
 :root {
+  /* Constant colors that work well across both light and dark themes */
+  --app-color-primary: #3880ff;
+  --app-color-danger: #dc3545;
+  --app-color-warning: #ffc107;
+  --app-color-success: #198754;
+  --app-color-info: #0dcaf0;
+
   --ion-color-primary: #3880ff;
-  --ion-color-primary-rgb: 56,128,255;
+  --ion-color-primary-rgb: 56, 128, 255;
   --ion-color-primary-contrast: #ffffff;
-  --ion-color-primary-contrast-rgb: 255,255,255;
+  --ion-color-primary-contrast-rgb: 255, 255, 255;
   --ion-color-primary-shade: #3171e0;
   --ion-color-primary-tint: #4c8dff;
+
+  /* Default Light Mode tokens */
+  color-scheme: light;
+  --app-bg: #ffffff;
+  --app-surface: #ffffff;
+  --app-surface-subtle: #f8f9fa;
+  --app-surface-border: #e2e8f0;
+  --app-text: #1e293b;
+  --app-text-muted: #64748b;
+  --app-input-bg: #f8fafc;
+  --app-input-border: #cbd5e1;
+  --app-badge-genre-bg: #f1f5f9;
+  --app-badge-genre-border: #cbd5e1;
+  --app-badge-genre-text: #334155;
+  --app-tab-border: #cbd5e1;
+  --app-tab-text: #475569;
+  --app-tab-badge-bg: #e2e8f0;
+  --app-tab-badge-text: #334155;
+  --app-theme-icon-color: #4f46e5;
+  --app-poster-container-bg: #f1f5f9;
+  --app-note-bg: rgba(0, 0, 0, 0.03);
+  --app-note-border: rgba(0, 0, 0, 0.08);
+
+  /* Toast Notification (Light Mode) */
+  --app-toast-bg: #ffffff;
+  --app-toast-color: #0f172a;
+  --app-toast-header: #0f172a;
+  --app-toast-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+  --app-toast-poster-border: rgba(0, 0, 0, 0.12);
+  --app-toast-text-color: #334155;
+  --app-toast-border: #3880ff;
+  --app-toast-btn: #2563eb;
+}
+
+/* Dark Mode overrides when .ion-palette-dark is applied to <html> */
+html.ion-palette-dark,
+[data-bs-theme="dark"] {
+  color-scheme: dark;
+  --app-bg: #121212;
+  --app-surface: #1e1e1e;
+  --app-surface-subtle: #181920;
+  --app-surface-border: rgba(255, 255, 255, 0.08);
+  --app-text: #f8fafc;
+  --app-text-muted: #94a3b8;
+  --app-input-bg: #1e1e28;
+  --app-input-border: #333344;
+  --app-badge-genre-bg: #1f212d;
+  --app-badge-genre-border: #374151;
+  --app-badge-genre-text: #e2e8f0;
+  --app-tab-border: #444455;
+  --app-tab-text: #94a3b8;
+  --app-tab-badge-bg: #333344;
+  --app-tab-badge-text: #94a3b8;
+  --app-theme-icon-color: #f59e0b;
+  --app-poster-container-bg: #161722;
+  --app-note-bg: rgba(255, 255, 255, 0.05);
+  --app-note-border: rgba(255, 255, 255, 0.08);
+
+  /* Toast Notification (Dark Mode) */
+  --app-toast-bg: #181922;
+  --app-toast-color: #ffffff;
+  --app-toast-header: #ffffff;
+  --app-toast-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+  --app-toast-poster-border: rgba(255, 255, 255, 0.15);
+  --app-toast-text-color: #e2e8f0;
+  --app-toast-border: #3880ff;
+  --app-toast-btn: #4c8dff;
+}
+
+/* ==========================================================================
+   Reusable Theme Adaptive Utilities
+   ========================================================================== */
+
+/* Subtle secondary bar for counters, filters, and summaries */
+.subtle-surface-bar {
+  background-color: var(--app-surface-subtle) !important;
+  border-color: var(--app-surface-border) !important;
+  color: var(--app-text-muted) !important;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+/* Genre pill badges */
+.genre-badge {
+  background-color: var(--app-badge-genre-bg) !important;
+  border: 1px solid var(--app-badge-genre-border) !important;
+  color: var(--app-badge-genre-text) !important;
+  font-weight: 500;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Theme-adaptive text colors */
+.text-theme-muted {
+  color: var(--app-text-muted) !important;
+}
+
+.text-theme-main {
+  color: var(--app-text) !important;
+}
+
+.text-theme-icon {
+  color: var(--app-theme-icon-color) !important;
+  transition: color 0.2s ease;
+}
+
+/* Animated theme switcher button */
+.theme-toggle-btn i {
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), color 0.2s ease;
+}
+
+.theme-toggle-btn:hover i {
+  transform: rotate(20deg) scale(1.15);
 }
 
 /* Custom In-App Notification Toast Styling */
 ion-toast.watchme-toast {
-  --background: #181922;
-  --color: #ffffff;
-  --box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
-  --border-radius: 14px;
-  --border-color: #3880ff;
-  --border-width: 1.5px;
-  --border-style: solid;
-  --max-width: 500px;
-  margin: 12px auto;
+  --background: var(--app-toast-bg) !important;
+  --color: var(--app-toast-color) !important;
+  --box-shadow: var(--app-toast-shadow) !important;
+  --border-radius: 14px !important;
+  --border-color: var(--app-toast-border, #3880ff) !important;
+  --border-width: 1.5px !important;
+  --border-style: solid !important;
+  --max-width: 520px !important;
+  margin: 12px auto !important;
 
   &::part(container) {
-    padding: 10px 14px;
+    padding: 12px 14px !important;
   }
 
   &::part(header) {
-    font-weight: 700;
-    font-size: 1rem;
-    color: #4c8dff;
-    letter-spacing: 0.3px;
+    font-weight: 700 !important;
+    font-size: 1.05rem !important;
+    color: var(--app-toast-header) !important;
+    letter-spacing: 0.3px !important;
+    margin-bottom: 4px !important;
   }
 
   &::part(message) {
-    overflow: visible;
-    white-space: normal;
+    overflow: visible !important;
+    white-space: normal !important;
+    color: var(--app-toast-text-color) !important;
   }
 
   &::part(button) {
-    color: #3880ff;
-    font-weight: 700;
+    color: var(--app-toast-btn, #3880ff) !important;
+    font-weight: 700 !important;
   }
 }
 
@@ -86,8 +211,8 @@ ion-toast.watchme-toast {
   object-fit: cover !important;
   border-radius: 6px !important;
   flex-shrink: 0 !important;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5) !important;
-  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25) !important;
+  border: 1px solid var(--app-toast-poster-border) !important;
   display: block !important;
 }
 
@@ -96,5 +221,129 @@ ion-toast.watchme-toast {
   min-width: 0 !important;
   font-size: 0.9rem !important;
   line-height: 1.35 !important;
-  color: #e2e8f0 !important;
+  color: var(--app-toast-text-color) !important;
 }
+
+/* ==========================================================================
+   Shared Search Bar & Category Tabs
+   ========================================================================== */
+
+.search-toolbar {
+  --background: var(--ion-toolbar-background, var(--ion-color-step-50));
+  --border-width: 0;
+  padding-bottom: 4px;
+}
+
+.search-wrapper {
+  width: 100%;
+}
+
+.search-input-container {
+  display: flex;
+  align-items: center;
+  background: var(--app-input-bg, var(--ion-color-step-100, #1e1e1e));
+  border: 1px solid var(--app-input-border, var(--ion-color-step-200, #333));
+  border-radius: 10px;
+  padding: 2px 10px;
+  gap: 6px;
+  transition: border-color 0.2s, background-color 0.2s;
+
+  &:focus-within {
+    border-color: var(--ion-color-primary);
+  }
+}
+
+.search-icon {
+  color: var(--app-text-muted, var(--ion-color-medium));
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  --background: transparent;
+  --color: var(--app-text, inherit);
+  --placeholder-color: var(--app-text-muted, var(--ion-color-medium));
+  --padding-start: 0;
+  --padding-end: 0;
+  font-size: 0.95rem;
+}
+
+.clear-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  color: var(--app-text-muted, var(--ion-color-medium));
+  display: flex;
+  align-items: center;
+  font-size: 1rem;
+  transition: color 0.15s;
+
+  &:hover {
+    color: var(--ion-color-danger);
+  }
+}
+
+.category-toolbar {
+  --background: var(--ion-toolbar-background, var(--ion-color-step-50));
+  --border-width: 0;
+  --min-height: 44px;
+}
+
+.category-tabs {
+  display: flex;
+  gap: 6px;
+  overflow-x: auto;
+  padding-bottom: 6px;
+  scrollbar-width: none;
+  &::-webkit-scrollbar { display: none; }
+}
+
+.cat-tab {
+  display: inline-flex;
+  align-items: center;
+  white-space: nowrap;
+  background: transparent;
+  border: 1.5px solid var(--app-tab-border, var(--ion-color-step-300, #444));
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.82rem;
+  color: var(--app-tab-text, var(--ion-color-medium));
+  cursor: pointer;
+  transition: background 0.18s, border-color 0.18s, color 0.18s;
+  gap: 4px;
+
+  &.active {
+    background: var(--ion-color-primary);
+    border-color: var(--ion-color-primary);
+    color: #fff;
+    font-weight: 600;
+
+    .cat-badge {
+      background: rgba(255,255,255,0.25);
+      color: #fff;
+    }
+  }
+
+  &:not(.active):hover {
+    border-color: var(--ion-color-primary);
+    color: var(--ion-color-primary);
+  }
+}
+
+.cat-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--app-tab-badge-bg, var(--ion-color-step-300, #555));
+  color: var(--app-tab-badge-text, var(--ion-color-medium));
+  border-radius: 10px;
+  min-width: 18px;
+  height: 18px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 0 5px;
+  margin-left: 2px;
+}
+

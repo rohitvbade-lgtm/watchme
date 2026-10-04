@@ -5,6 +5,7 @@ import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { ApiService } from '../../core/services/api.service';
 import { SearchResult } from '../../core/models/search-result.model';
+import { ThemeService } from '../../core/services/theme.service';
 
 @Component({
   selector: 'app-search',
@@ -31,6 +32,7 @@ export class SearchPage {
   constructor(
     private apiService: ApiService,
     private router: Router,
+    public themeService: ThemeService,
     private cdr: ChangeDetectorRef
   ) {
     this.searchSubject.pipe(
@@ -41,6 +43,24 @@ export class SearchPage {
       this.currentPage = 1;
       this.performSearch(query, 1);
     });
+  }
+
+  get isDarkMode(): boolean {
+    return this.themeService.isDarkMode;
+  }
+
+  get placeholderUrl(): string {
+    return this.themeService.placeholderUrl;
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
+
+  onImageError(event: any): void {
+    if (event?.target) {
+      event.target.src = this.placeholderUrl;
+    }
   }
 
   onSearchChange(event: any) {

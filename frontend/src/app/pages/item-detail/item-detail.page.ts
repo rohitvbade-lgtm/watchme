@@ -4,6 +4,7 @@ import { NavController, ToastController } from '@ionic/angular';
 import { SearchResult } from '../../core/models/search-result.model';
 import { WatchlistService } from '../../core/services/watchlist.service';
 import { LocalDbService } from '../../core/services/local-db.service';
+import { ThemeService } from '../../core/services/theme.service';
 
 @Component({
   selector: 'app-item-detail',
@@ -21,11 +22,30 @@ export class ItemDetailPage implements OnInit {
     private watchlistService: WatchlistService,
     private localDb: LocalDbService,
     private toastCtrl: ToastController,
+    public themeService: ThemeService,
     private cdr: ChangeDetectorRef
   ) {
     const navigation = this.router.getCurrentNavigation();
     if (navigation?.extras.state && navigation.extras.state['result']) {
       this.result = navigation.extras.state['result'];
+    }
+  }
+
+  get isDarkMode(): boolean {
+    return this.themeService.isDarkMode;
+  }
+
+  get placeholderUrl(): string {
+    return this.themeService.placeholderUrl;
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
+
+  onImageError(event: any): void {
+    if (event?.target) {
+      event.target.src = this.placeholderUrl;
     }
   }
 

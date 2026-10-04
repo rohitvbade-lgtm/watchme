@@ -2,8 +2,9 @@
   width: 100%;
   display: flex;
   justify-content: center;
-  background: var(--ion-color-dark);
+  background: var(--app-poster-container-bg, var(--ion-color-step-100, #161722));
   padding: 1rem 0;
+  transition: background-color 0.2s ease;
 }
 
 .poster-img {

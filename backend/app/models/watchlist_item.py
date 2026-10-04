@@ -16,6 +16,7 @@ class WatchlistItem(Base):
     media_item_id = Column(UUID(as_uuid=True), ForeignKey("media_item.id"), nullable=False)
     watched = Column(Boolean, default=False)
     watched_at = Column(DateTime(timezone=True), nullable=True)
+    rewatch = Column(Boolean, default=False)
     added_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     media_item = relationship("MediaItem")

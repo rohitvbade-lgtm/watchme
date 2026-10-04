@@ -7,6 +7,8 @@
 *firebase*.json
 *adminsdk*.json
 watchme-*.json
+Ignore This/
+ignoreThis.txt
 
 # Python
 __pycache__/
@@ -63,3 +65,4 @@ www/
 .DS_Store
 Thumbs.db
 Desktop.ini
+.idea/

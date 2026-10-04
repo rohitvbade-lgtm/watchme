@@ -4,13 +4,18 @@
       <ion-back-button defaultHref="/search"></ion-back-button>
     </ion-buttons>
     <ion-title>{{ result?.title }}</ion-title>
+    <ion-buttons slot="end">
+      <ion-button (click)="toggleTheme()" [title]="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'" aria-label="Toggle dark/light mode" class="theme-toggle-btn">
+        <i [class]="isDarkMode ? 'bi bi-sun-fill text-warning fs-5' : 'bi bi-moon-stars-fill fs-5 text-theme-icon'"></i>
+      </ion-button>
+    </ion-buttons>
   </ion-toolbar>
 </ion-header>
 
 <ion-content>
   <div *ngIf="result" class="detail-container">
     <div class="poster-container text-center pt-3">
-      <img [src]="result.posterUrl || 'assets/placeholder.svg'" class="poster-img shadow rounded" />
+      <img [src]="result.posterUrl || placeholderUrl" class="poster-img shadow rounded" (error)="onImageError($event)" />
     </div>
     
     <div class="info-section ion-padding">
@@ -27,7 +32,7 @@
       </p>
       
       <div class="genres d-flex flex-wrap gap-1 my-2" *ngIf="result.genres && result.genres.length > 0">
-        <span *ngFor="let g of result.genres" class="badge bg-dark border text-light">
+        <span *ngFor="let g of result.genres" class="badge genre-badge">
           {{ g }}
         </span>
       </div>

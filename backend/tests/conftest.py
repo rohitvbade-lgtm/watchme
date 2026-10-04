@@ -14,6 +14,7 @@ from app.models.base import Base
 from app.config import get_settings
 
 get_settings().debug = False
+get_settings().api_secret_key = None
 
 # Use SQLite in-memory for tests
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"

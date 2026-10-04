@@ -6,7 +6,10 @@ import { LocalWatchlistItem } from '../../core/models/watchlist-item.model';
 import { ApiService } from '../../core/services/api.service';
 import { DeviceService } from '../../core/services/device.service';
 import { NotificationService } from '../../core/services/notification.service';
+import { ThemeService } from '../../core/services/theme.service';
 import { Subscription } from 'rxjs';
+
+export type WatchCategory = 'all' | 'up-next' | 'watched' | 'watch-again';
 
 @Component({
   selector: 'app-watchlist',
@@ -14,12 +17,29 @@ import { Subscription } from 'rxjs';
   styleUrls: ['./watchlist.page.scss'],
 })
 export class WatchlistPage implements OnInit, OnDestroy {
+  /** Full, unfiltered list of all items from local DB */
   allItems: LocalWatchlistItem[] = [];
+  /** Items after search + category filtering, before pagination */
+  filteredItems: LocalWatchlistItem[] = [];
+  /** Items shown on the current page */
   items: LocalWatchlistItem[] = [];
+
   loading = true;
   triggeringNudge = false;
 
-  // Pagination state (max 10 items viewed at once)
+  // Search
+  searchQuery = '';
+
+  // Category tabs
+  activeCategory: WatchCategory = 'all';
+  readonly categories: { key: WatchCategory; label: string; icon: string }[] = [
+    { key: 'all',          label: 'All',          icon: 'bi-collection-play' },
+    { key: 'up-next',      label: 'Up Next',      icon: 'bi-clock'           },
+    { key: 'watched',      label: 'Watched',       icon: 'bi-check-circle'    },
+    { key: 'watch-again',  label: 'Watch Again',  icon: 'bi-arrow-repeat'    },
+  ];
+
+  // Pagination
   currentPage = 1;
   pageSize = 10;
   totalPages = 1;
@@ -34,8 +54,29 @@ export class WatchlistPage implements OnInit, OnDestroy {
     private apiService: ApiService,
     private deviceService: DeviceService,
     private notificationService: NotificationService,
+    public themeService: ThemeService,
     private cdr: ChangeDetectorRef
   ) {}
+
+  get isDarkMode(): boolean {
+    return this.themeService.isDarkMode;
+  }
+
+  get placeholderUrl(): string {
+    return this.themeService.placeholderUrl;
+  }
+
+  toggleTheme(): void {
+    this.themeService.toggleTheme();
+  }
+
+  onImageError(event: any): void {
+    if (event?.target) {
+      event.target.src = this.placeholderUrl;
+    }
+  }
+
+  // ─── Notification nudge ─────────────────────────────────────────────────────
 
   triggerTestNudge() {
     this.triggeringNudge = true;
@@ -60,6 +101,8 @@ export class WatchlistPage implements OnInit, OnDestroy {
     });
   }
 
+  // ─── Lifecycle ───────────────────────────────────────────────────────────────
+
   ngOnInit() {
     this.loadData();
     this.sub = this.watchlistService.watchlistUpdated$.subscribe(() => {
@@ -79,10 +122,12 @@ export class WatchlistPage implements OnInit, OnDestroy {
     });
   }
 
+  // ─── Data loading ────────────────────────────────────────────────────────────
+
   async loadData() {
     try {
       this.allItems = await this.localDb.getAll();
-      this.updatePagination();
+      this.applyFilters();
     } catch (err) {
       console.error('[WatchlistPage] Error loading local watchlist:', err);
     } finally {
@@ -91,8 +136,62 @@ export class WatchlistPage implements OnInit, OnDestroy {
     }
   }
 
+  // ─── Search & filter ─────────────────────────────────────────────────────────
+
+  onSearchChange(event: any) {
+    this.searchQuery = (event?.detail?.value ?? event?.target?.value ?? '').trim();
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  clearSearch() {
+    this.searchQuery = '';
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  setCategory(cat: WatchCategory) {
+    this.activeCategory = cat;
+    this.currentPage = 1;
+    this.applyFilters();
+  }
+
+  private applyFilters() {
+    let source = this.allItems;
+
+    // 1. Category filter
+    switch (this.activeCategory) {
+      case 'up-next':
+        source = source.filter(i => i.watched !== 1);
+        break;
+      case 'watched':
+        // Watched AND not marked for rewatch
+        source = source.filter(i => i.watched === 1 && i.rewatch !== 1);
+        break;
+      case 'watch-again':
+        source = source.filter(i => i.rewatch === 1);
+        break;
+      // 'all' — no category filter
+    }
+
+    // 2. Search filter (title, overview, genre)
+    const q = this.searchQuery.toLowerCase();
+    if (q) {
+      source = source.filter(i =>
+        i.title?.toLowerCase().includes(q) ||
+        i.overview?.toLowerCase().includes(q) ||
+        i.genres?.toLowerCase().includes(q)
+      );
+    }
+
+    this.filteredItems = source;
+    this.updatePagination();
+  }
+
+  // ─── Pagination ──────────────────────────────────────────────────────────────
+
   updatePagination() {
-    this.totalItems = this.allItems.length;
+    this.totalItems = this.filteredItems.length;
     this.totalPages = this.totalItems > 0 ? Math.ceil(this.totalItems / this.pageSize) : 1;
     if (this.currentPage > this.totalPages) {
       this.currentPage = this.totalPages;
@@ -101,7 +200,7 @@ export class WatchlistPage implements OnInit, OnDestroy {
       this.currentPage = 1;
     }
     const startIndex = (this.currentPage - 1) * this.pageSize;
-    this.items = this.allItems.slice(startIndex, startIndex + this.pageSize);
+    this.items = this.filteredItems.slice(startIndex, startIndex + this.pageSize);
     this.cdr.markForCheck();
   }
 
@@ -125,6 +224,19 @@ export class WatchlistPage implements OnInit, OnDestroy {
       this.updatePagination();
     }
   }
+
+  // ─── Count helpers for badges ────────────────────────────────────────────────
+
+  countForCategory(cat: WatchCategory): number {
+    switch (cat) {
+      case 'up-next':      return this.allItems.filter(i => i.watched !== 1).length;
+      case 'watched':      return this.allItems.filter(i => i.watched === 1 && i.rewatch !== 1).length;
+      case 'watch-again':  return this.allItems.filter(i => i.rewatch === 1).length;
+      default:             return this.allItems.length;
+    }
+  }
+
+  // ─── Actions ─────────────────────────────────────────────────────────────────
 
   handleRefresh(event: any) {
     this.watchlistService.syncFromBackend().subscribe({
