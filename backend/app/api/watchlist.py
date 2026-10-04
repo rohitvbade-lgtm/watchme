@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, func
+from sqlalchemy import select, func, update
 from sqlalchemy.orm import selectinload
 from sqlalchemy.exc import IntegrityError
 from datetime import datetime, timezone
@@ -10,6 +10,8 @@ from app.db.session import get_db
 from app.schemas.watchlist import WatchlistAddRequest, WatchlistItemSchema, WatchlistResponse
 from app.models.watchlist_item import WatchlistItem
 from app.models.media_item import MediaItem
+from app.models.notification_event import NotificationEvent
+from app.config import get_settings
 from app.services.metadata.tmdb import TMDBMetadataProvider
 
 router = APIRouter()
@@ -115,17 +117,61 @@ async def add_to_watchlist(
 
 @router.delete("/{id}")
 async def delete_from_watchlist(
-    id: uuid.UUID,
+    id: str,
     device_id: str = Query(...),
     db: AsyncSession = Depends(get_db)
 ):
-    stmt = select(WatchlistItem).where(WatchlistItem.id == id, WatchlistItem.device_id == device_id)
+    parsed_uuid = None
+    try:
+        parsed_uuid = uuid.UUID(id)
+    except (ValueError, AttributeError):
+        pass
+
+    if parsed_uuid:
+        stmt = (
+            select(WatchlistItem)
+            .where(
+                (WatchlistItem.id == parsed_uuid) | (WatchlistItem.media_item_id == parsed_uuid),
+                WatchlistItem.device_id == device_id
+            )
+            .options(selectinload(WatchlistItem.media_item))
+        )
+    else:
+        stmt = (
+            select(WatchlistItem)
+            .join(MediaItem, WatchlistItem.media_item_id == MediaItem.id)
+            .where(
+                MediaItem.provider_id == id,
+                WatchlistItem.device_id == device_id
+            )
+            .options(selectinload(WatchlistItem.media_item))
+        )
+
     result = await db.execute(stmt)
     item = result.scalar_one_or_none()
     
     if not item:
         raise HTTPException(status_code=404, detail="Watchlist item not found")
-        
+
+    settings = get_settings()
+    title = item.media_item.title if item.media_item else None
+    image_url = None
+    if item.media_item and item.media_item.poster_path:
+        p = item.media_item.poster_path
+        image_url = p if p.startswith("http") else f"{settings.tmdb_image_base_url}{p}"
+
+    # Disconnect notification events so foreign key constraint is never violated,
+    # while preserving item_title and item_image_url for historical notification displays.
+    update_stmt = (
+        update(NotificationEvent)
+        .where(NotificationEvent.watchlist_item_id == item.id)
+        .values(
+            watchlist_item_id=None,
+            item_title=func.coalesce(NotificationEvent.item_title, title),
+            item_image_url=func.coalesce(NotificationEvent.item_image_url, image_url)
+        )
+    )
+    await db.execute(update_stmt)
     await db.delete(item)
     await db.commit()
     return {"status": "ok"}

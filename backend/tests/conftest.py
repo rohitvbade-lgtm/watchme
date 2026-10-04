@@ -19,7 +19,16 @@ get_settings().api_secret_key = None
 # Use SQLite in-memory for tests
 SQLALCHEMY_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 
+from sqlalchemy import event
+
 engine = create_async_engine(SQLALCHEMY_DATABASE_URL, echo=False, connect_args={"check_same_thread": False})
+
+@event.listens_for(engine.sync_engine, "connect")
+def set_sqlite_pragma(dbapi_connection, connection_record):
+    cursor = dbapi_connection.cursor()
+    cursor.execute("PRAGMA foreign_keys=ON")
+    cursor.close()
+
 TestingSessionLocal = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
 
 async def override_get_db():

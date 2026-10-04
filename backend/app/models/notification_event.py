@@ -10,7 +10,7 @@ class NotificationEvent(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     device_id = Column(String, nullable=False)
-    watchlist_item_id = Column(UUID(as_uuid=True), ForeignKey("watchlist_item.id"), nullable=True)
+    watchlist_item_id = Column(UUID(as_uuid=True), ForeignKey("watchlist_item.id", ondelete="SET NULL"), nullable=True)
     item_title = Column(String, nullable=True)
     item_image_url = Column(String, nullable=True)
     text = Column(String, nullable=False)
@@ -19,4 +19,4 @@ class NotificationEvent(Base):
     created_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
     sent_at = Column(DateTime(timezone=True), nullable=True)
 
-    watchlist_item = relationship("WatchlistItem")
+    watchlist_item = relationship("WatchlistItem", back_populates="notification_events")

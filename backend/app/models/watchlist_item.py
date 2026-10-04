@@ -20,3 +20,4 @@ class WatchlistItem(Base):
     added_at = Column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
 
     media_item = relationship("MediaItem")
+    notification_events = relationship("NotificationEvent", back_populates="watchlist_item", passive_deletes=True)
