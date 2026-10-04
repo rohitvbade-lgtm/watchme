@@ -77,6 +77,10 @@ class RateLimiterMiddleware(BaseHTTPMiddleware):
         if not settings.rate_limit_enabled:
             return await call_next(request)
 
+        # Exempt CORS preflight requests — must reach CORSMiddleware before being counted
+        if request.method == "OPTIONS":
+            return await call_next(request)
+
         # Exempt health check and docs
         path = request.url.path
         if path == "/health" or path.startswith("/docs") or path.startswith("/openapi.json"):

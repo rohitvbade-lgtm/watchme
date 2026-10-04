@@ -20,7 +20,7 @@ class Settings(BaseSettings):
     debug: bool = False
     
     app_name: str = "WatchMe"
-    cors_origins: list[str] = ["http://localhost:4200", "http://localhost:8100", "capacitor://localhost", "ionic://localhost"]
+    cors_origins: list[str] = ["http://localhost:4200", "http://localhost:8100", "https://localhost", "capacitor://localhost", "ionic://localhost"]
 
     # Security & Protection settings (accepts either API_SECRET_KEY or API_SECRET)
     api_secret_key: Optional[str] = Field(None, validation_alias=AliasChoices("api_secret_key", "api_secret"))

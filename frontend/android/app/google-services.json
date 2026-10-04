@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "429130998935",
+    "project_id": "watchme-166bb",
+    "storage_bucket": "watchme-166bb.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:429130998935:android:0bab6fe729bf6e07f175d2",
+        "android_client_info": {
+          "package_name": "com.watchme.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDmm7M_Ng-AIqkgb7UQmUoH8hx6MjMsXYk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">WatchMe</string>
+    <string name="title_activity_main">WatchMe</string>
+    <string name="package_name">com.watchme.app</string>
+    <string name="custom_url_scheme">com.watchme.app</string>
+</resources>
