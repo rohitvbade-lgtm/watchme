@@ -8,6 +8,7 @@ import { DeviceService } from '../../core/services/device.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { Subscription } from 'rxjs';
+import { environment } from '../../../environments/environment';
 
 export type WatchCategory = 'all' | 'up-next' | 'watched' | 'watch-again';
 
@@ -17,6 +18,8 @@ export type WatchCategory = 'all' | 'up-next' | 'watched' | 'watch-again';
   styleUrls: ['./watchlist.page.scss'],
 })
 export class WatchlistPage implements OnInit, OnDestroy {
+  readonly isProduction = environment.production;
+
   /** Full, unfiltered list of all items from local DB */
   allItems: LocalWatchlistItem[] = [];
   /** Items after search + category filtering, before pagination */
@@ -79,6 +82,7 @@ export class WatchlistPage implements OnInit, OnDestroy {
   // ─── Notification nudge ─────────────────────────────────────────────────────
 
   triggerTestNudge() {
+    if (this.isProduction) return;
     this.triggeringNudge = true;
     const deviceId = this.deviceService.getDeviceId();
     this.apiService.testNotification(deviceId).subscribe({

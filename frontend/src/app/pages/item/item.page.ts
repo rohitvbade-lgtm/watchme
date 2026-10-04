@@ -8,6 +8,7 @@ import { DeviceService } from '../../core/services/device.service';
 import { NotificationService } from '../../core/services/notification.service';
 import { LocalWatchlistItem } from '../../core/models/watchlist-item.model';
 import { ThemeService } from '../../core/services/theme.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-item',
@@ -15,6 +16,7 @@ import { ThemeService } from '../../core/services/theme.service';
   styleUrls: ['./item.page.scss'],
 })
 export class ItemPage implements OnInit {
+  readonly isProduction = environment.production;
   backendId!: string;
   item?: LocalWatchlistItem;
   genres: string[] = [];
@@ -136,7 +138,7 @@ export class ItemPage implements OnInit {
   }
 
   async sendTestNotification() {
-    if (!this.item || !this.backendId) return;
+    if (this.isProduction || !this.item || !this.backendId) return;
     this.sendingNotification = true;
     const deviceId = this.deviceService.getDeviceId();
     this.apiService.testNotification(deviceId, this.backendId).subscribe({

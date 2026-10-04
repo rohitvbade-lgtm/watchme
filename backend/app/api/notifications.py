@@ -4,16 +4,13 @@ from sqlalchemy import select, desc
 from sqlalchemy.orm import selectinload
 from typing import List, Optional
 import uuid
+from datetime import datetime, timezone
 
 from app.db.session import get_db
 from app.schemas.notification import NotificationEventSchema
 from app.models.notification_event import NotificationEvent
 from app.models.watchlist_item import WatchlistItem
-from app.services.notifications.ai_generator import AINotificationGenerator
-from app.services.notifications.template_generator import TemplateNotificationGenerator
-from app.services.push.fcm import FCMPushProvider
 from app.config import get_settings
-from datetime import datetime, timezone
 
 router = APIRouter()
 settings = get_settings()
@@ -149,4 +146,5 @@ async def test_notification(req: TestNotifRequest, db: AsyncSession = Depends(ge
         "method": method,
         "pushed": success
     }
+
 

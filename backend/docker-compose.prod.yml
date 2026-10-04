@@ -15,8 +15,9 @@ services:
     expose:
       - "8000"
     volumes:
-      # Optional: Mount FCM service account JSON securely in read-only mode if configured
-      - ./:/app/secrets:ro
+      # Mount FCM service account JSON — backend dir is the container working dir (/app),
+      # so a relative FCM_CREDENTIALS_PATH resolves directly without extra lookup logic.
+      - ./watchme-166bb-firebase-adminsdk-fbsvc-66bfeccd20.json:/app/watchme-166bb-firebase-adminsdk-fbsvc-66bfeccd20.json:ro
     healthcheck:
       test: ["CMD", "curl", "-f", "http://127.0.0.1:8000/health"]
       interval: 15s

@@ -10,7 +10,7 @@
       <ion-button (click)="toggleTheme()" [title]="isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'" aria-label="Toggle dark/light mode" class="theme-toggle-btn">
         <i [class]="isDarkMode ? 'bi bi-sun-fill text-warning fs-5' : 'bi bi-moon-stars-fill fs-5 text-theme-icon'"></i>
       </ion-button>
-      <ion-button (click)="triggerTestNudge()" title="Simulate notification nudge" [disabled]="triggeringNudge">
+      <ion-button *ngIf="!isProduction" (click)="triggerTestNudge()" title="Simulate notification nudge" [disabled]="triggeringNudge">
         <i class="bi bi-bell-fill fs-5 text-warning"></i>
       </ion-button>
     </ion-buttons>

@@ -28,6 +28,7 @@ class FCMPushProvider(PushNotificationProvider):
         candidates = [
             Path.cwd() / raw_path,
             Path.cwd() / clean_name,
+            Path("/app") / clean_name,         # Docker container working dir
             this_file.parents[3] / clean_name,  # backend root
             this_file.parents[4] / clean_name,  # workspace root
             Path.cwd().parent / clean_name,
@@ -50,12 +51,18 @@ class FCMPushProvider(PushNotificationProvider):
         try:
             if not firebase_admin._apps:
                 resolved_path = self._resolve_credentials_path(settings.fcm_credentials_path)
+                logger.info(f"Initializing Firebase Admin SDK with credentials: {resolved_path}")
                 cred = credentials.Certificate(resolved_path)
                 firebase_admin.initialize_app(cred)
             self._initialized = True
             self._has_credentials = True
+            logger.info("Firebase Admin SDK initialized successfully.")
         except Exception as e:
-            logger.error(f"Failed to initialize Firebase Admin SDK: {e}")
+            resolved_path = self._resolve_credentials_path(settings.fcm_credentials_path)
+            logger.error(
+                f"Failed to initialize Firebase Admin SDK. "
+                f"Resolved credentials path: '{resolved_path}'. Error: {e}"
+            )
             self._initialized = True
             self._has_credentials = False
 
